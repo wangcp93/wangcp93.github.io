@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+<script src="https://d3js.org/d3.v5.min.js"></script>
+
+<head>
+<title>Nutritions in McDonalds Menu</title>
+</head>
+
+<style>
+.container {margin-left:465px}
+.container2 {margin-left:1050px}
+
+#tooltip {
+  opacity: 0;
+  position: absolute;
+  text-align: left;
+  font-size: 14px;
+  background: AliceBlue;
+  border: 0px;
+  padding: 10px 20px;
+}
+
+#annotation1 {
+  position: absolute;
+  text-align: left;
+  font-size: 14px;
+  background: MistyRose;
+  border: 0px;
+  padding: 5px 10px;
+}
+
+#annotation2 {
+  position: absolute;
+  text-align: left;
+  font-size: 14px;
+  background: MistyRose;
+  border: 0px;
+  padding: 5px 10px;
+}
+
+button {
+  background-color: white;
+  border: 2px solid SeaGreen;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  border-radius: 8px;
+  transition-duration: 0.4s;
+  cursor: pointer;
+}
+
+.button1:hover {
+  background-color: SeaGreen;
+  color: white;
+}
+
+p {font-size : 18px;}
+
+</style>
+
+<body onload="init()">
+
+<h1>Carbohydrates in McDonald Menu</h1>
+<br>
+<p>Almost all dishes from Mcdonald contain carbohydrates. In general, main dishes like beef, pork and chicken contain moderate
+  amount of carbohydrate.<br>Salads are low in carbohydrate. In contrast, smoothies and shakes contain the highest amount of carbohydrate.
+</p>
+<p>Carbohydrates also come in different forms. Added sugars are usually free sugars which are considered unhealthy. Clearly, carbohydrates from main
+  dishes <br> are mostly natural, versus carbohydrates in desserts, beverages, smoothies and shakes are mostly added sugars! Click the button below
+  to show the percentage <br> of added sugars in each dish.</p>
+
+<p>Carbohydrates are major sources of calories. Click the button below to learn how calories are related with the amount of carbohydrates in each
+  menu item.</p>
+<svg width="1200" height="600">
+  <div id="annotation1"></div>
+  <div id="annotation2"></div>
+</svg>
+
+<div id="tooltip"></div>
+<br>
+
+<button onclick="ShowSugar()" class="container button1" align="center">
+Click to show added sugars</button>
+<br>
+<button class="container2 button1">
+NEXT</button>
+<br>
+<button class="container button1" align="center">
+Click to learn how calories<br>
+change with carbohydrates</button>
+
+<script>
+async function init() {
+  const data = await d3.csv(
+    "https://wangcp93.github.io/data/McDonaldsMenuAggr.csv");
+  
+  var width = 900;
+  var height = 500;
+  var upmargin = 50;
+  var leftmargin = 150;
+  var fields = ["Breakfast", "Beef & Pork", "Chicken & Fish", "Salads", "Snacks & Sides", "Desserts", "Beverages", "Coffee & Tea", "Smoothies & Shakes"];
+  var colors = ["Gray", "Crimson", "Orange", "Green", "Violet", "DodgerBlue", "Olive", "Brown", "SlateBlue"];
+
+  var x = d3.scaleBand().domain(fields).range([0, width]);
+  var y = d3.scaleLinear().domain([0,100]).range([height,0]);
+  var color = d3.scaleOrdinal().domain(fields).range(colors);
+  var tooltip = d3.select("#tooltip");
+
+
+    d3.select("svg")
+      .append("g")
+        .attr("transform", "translate(" + leftmargin + "," + upmargin + ")")
+    .selectAll()
+    .data(data)
+    .enter()
+    .append("rect")
+    .attr("width", width/9-5)
+    .attr("x", function(d) {return x(d.Category); })
+    .attr("fill", function(d) {return color(d.Category);})
+    .attr("opacity", 0.65)
+    .on("mouseover", function(d,i) {
+      tooltip.style("opacity", 1)
+             .style("left", (d3.event.pageX)+"px")
+             .style("top", (d3.event.pageY)+"px")
+             .html(d.Category + "<br />Total carbohydrate: " + d.Carbohydrates + " g<br />Added sugar: " + d.Sugars
+                   + " g<br />Total calories: " + d.Calories + " kcal");
+    })
+    .on("mouseout", function() {
+      tooltip.style("opacity", 0);
+    })
+    .attr("height", 1)
+    .attr("y", height-1)
+    .transition().duration(2000).delay(500)
+    .attr("height", function(d) { return height - y(d.Carbohydrates); })
+    .attr("y", function(d) {return y(d.Carbohydrates); });
+    
+  var x_axis = d3.axisBottom(x)
+  var y_axis = d3.axisLeft(y)
+    .tickValues([10,20,30,40,50,60,70,80,90,100]);
+  d3.select("svg").append("g")
+    .style("font", "13px times")
+    .attr("transform", "translate(" + leftmargin + "," + (height + upmargin) + ")")
+    .call(x_axis);
+  d3.select("svg").append("g")
+    .style("font", "13px times")
+    .attr("transform", "translate(" + leftmargin + "," + upmargin + ")")
+    .call(y_axis);
+  
+  d3.select("svg")
+    .append("text")
+    .attr("x", leftmargin-25)
+    .attr("y", upmargin-25)
+    .text("Carbohydrate (g)")
+  d3.select("#annotation1")
+    .style("left", (leftmargin+width*5/6)+"px")
+    .style("top", (upmargin+275)+"px")
+    .html("Smoothies and shakes contain the <br />highest amount of carbohydrate, <br />most of which is added sugar.")
+    .style("opacity", 0)
+    .transition().duration(500).delay(2500)
+    .style("opacity", 1);
+  
+  d3.select("#annotation2")
+    .style("left", (leftmargin+width*1/6)+"px")
+    .style("top", (upmargin+height/3+325)+"px")
+    .html("Meat and vegie generally have <br />lower portion of added sugar.")
+    .style("opacity", 0)
+    .transition().duration(500).delay(2500)
+    .style("opacity", 1);
+}
+
+function ShowSugar() {
+  var data = [
+    {
+        "Category": "Breakfast",
+        "Calories": "526.7",
+        "Carbohydrates": "49.8",
+        "Sugars": "8.3",
+    },
+    {
+        "Category": "Beef & Pork",
+        "Calories": "494",
+        "Carbohydrates": "40.1",
+        "Sugars": "8.8",
+    },
+    {
+        "Category": "Chicken & Fish",
+        "Calories": "553",
+        "Carbohydrates": "49.1",
+        "Sugars": "7.3",
+    },
+    {
+        "Category": "Salads",
+        "Calories": "270",
+        "Carbohydrates": "21.7",
+        "Sugars": "6.8",
+    },
+    {
+        "Category": "Snacks & Sides",
+        "Calories": "245.8",
+        "Carbohydrates": "29.2",
+        "Sugars": "4.1",
+    },
+    {
+        "Category": "Desserts",
+        "Calories": "222.1",
+        "Carbohydrates": "34.9",
+        "Sugars": "26.1",
+    },
+    {
+        "Category": "Beverages",
+        "Calories": "113.7",
+        "Carbohydrates": "28.8",
+        "Sugars": "27.9",
+    },
+    {
+        "Category": "Coffee & Tea",
+        "Calories": "283.9",
+        "Carbohydrates": "44.5",
+        "Sugars": "39.6",
+    },
+    {
+        "Category": "Smoothies & Shakes",
+        "Calories": "531.4",
+        "Carbohydrates": "90.4",
+        "Sugars": "77.9",
+    }
+  ]
+  var width = 900;
+  var height = 500;
+  var leftmargin = 150;
+  var upmargin = 50;
+  var fields = ["Breakfast", "Beef & Pork", "Chicken & Fish", "Salads", "Snacks & Sides", "Desserts", "Beverages", "Coffee & Tea", "Smoothies & Shakes"];
+  var colors = ["Gray", "Crimson", "Orange", "Green", "Violet", "DodgerBlue", "Olive", "Brown", "SlateBlue"];
+  var x = d3.scaleBand().domain(fields).range([0, width]);
+  var y = d3.scaleLinear().domain([0,100]).range([height,0]);
+  var color = d3.scaleOrdinal().domain(fields).range(colors);
+  var tooltip = d3.select("#tooltip");
+
+  d3.select("svg")
+    .append("g")
+      .attr("transform", "translate(" + leftmargin + "," + upmargin + ")")
+    .selectAll()
+    .data(data)
+    .enter()
+    .append("rect")
+    .attr("width", width/9-5)
+    .attr("x", function(d) {return x(d.Category);})
+    .attr("fill", function(d) {return color(d.Category);})
+    .on("mouseover", function(d,i) {
+      tooltip.style("opacity", 1)
+             .style("left", (d3.event.pageX)+"px")
+             .style("top", (d3.event.pageY)+"px")
+             .html(d.Category + "<br />Total carbohydrate: " + d.Carbohydrates + " g<br />Added sugar: " + d.Sugars
+                   + " g<br />Total calories: " + d.Calories + " kcal");
+    })
+    .on("mouseout", function() {
+      tooltip.style("opacity", 0);
+    })
+    .attr("height", 1)
+    .attr("y", height-1)
+    .transition().duration(2000)
+    .attr("height", function(d) { return height - y(d.Sugars); })
+    .attr("y", function(d) {return y(d.Sugars); });
+  
+    
+}
+
+</script>
+</body>
+</html>
