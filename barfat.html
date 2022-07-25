@@ -1,0 +1,274 @@
+ <!DOCTYPE html>
+<html>
+<script src="https://d3js.org/d3.v5.min.js"></script>
+
+<head>
+<title>Nutritions in McDonalds Menu</title>
+</head>
+
+<style>
+.container {margin-left:465px}
+.container2 {margin-left:900px}
+
+#tooltip {
+  opacity: 0;
+  position: absolute;
+  text-align: left;
+  font-size: 14px;
+  background: AliceBlue;
+  border: 0px;
+  padding: 10px 20px;
+}
+
+#annotation1 {
+  position: absolute;
+  text-align: left;
+  font-size: 14px;
+  background: MistyRose;
+  border: 0px;
+  padding: 5px 10px;
+}
+
+#annotation2 {
+  position: absolute;
+  text-align: left;
+  font-size: 14px;
+  background: MistyRose;
+  border: 0px;
+  padding: 5px 10px;
+}
+
+button {
+  background-color: white;
+  border: 2px solid SeaGreen;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  border-radius: 8px;
+  transition-duration: 0.4s;
+  cursor: pointer;
+}
+
+.button1:hover {
+  background-color: SeaGreen;
+  color: white;
+}
+
+p {font-size : 18px;}
+
+</style>
+
+<body onload="init()">
+
+<h1>Fat in McDonald Menu</h1>
+<br>
+<p>Almost all dishes from Mcdonald contain fat. In general, main dishes like beef, pork and chicken contain the highest amount of fat from meat.
+    Salads and <br>sides are lighter food for non-fat lovers. Beverages like soda and juice contain almost no fat, while coffees and teas do.
+</p>
+<p>Fat also comes in different forms. Unsaturated fat, most abundant in vegies and fish, is considered a healthier source of fat. On the other hand,
+   meat has more <br> saturated fat. Interestingly, desserts, smoothies and shakes contain even higher portion of saturated fat, majorly coming
+   from creams. Do not overlook the  <br> amount of fat in these food! Click the button below to show the percentage of saturated fat in each dish.</p>
+
+<p>Fat is another major source of calories. Click the button below to learn how calories are related with the amount of total fat in each
+  menu item.</p>
+<svg width="1200" height="600">
+  <div id="annotation1"></div>
+  <div id="annotation2"></div>
+</svg>
+
+<div id="tooltip"></div>
+<br>
+
+<button onclick="ShowFat()" class="container button1" align="center">
+Click to show saturated fat</button>
+<br>
+<button class="button1">
+PREVIOUS</button>
+<button class="container2 button1">
+NEXT</button>
+<br>
+<button class="container button1" align="center">
+Click to learn how calories<br>
+change with total fat</button>
+
+<script>
+async function init() {
+  const data = await d3.csv(
+    "https://wangcp93.github.io/data/McDonaldsMenuAggr.csv");
+  
+  var width = 900;
+  var height = 500;
+  var upmargin = 50;
+  var leftmargin = 150;
+  var fields = ["Breakfast", "Beef & Pork", "Chicken & Fish", "Salads", "Snacks & Sides", "Desserts", "Beverages", "Coffee & Tea", "Smoothies & Shakes"];
+  var colors = ["Gray", "Crimson", "Orange", "Green", "Violet", "DodgerBlue", "Olive", "Brown", "SlateBlue"];
+
+  var x = d3.scaleBand().domain(fields).range([0, width]);
+  var y = d3.scaleLinear().domain([0,30]).range([height,0]);
+  var color = d3.scaleOrdinal().domain(fields).range(colors);
+  var tooltip = d3.select("#tooltip");
+
+
+    d3.select("svg")
+      .append("g")
+        .attr("transform", "translate(" + leftmargin + "," + upmargin + ")")
+    .selectAll()
+    .data(data)
+    .enter()
+    .append("rect")
+    .attr("width", width/9-5)
+    .attr("x", function(d) {return x(d.Category); })
+    .attr("fill", function(d) {return color(d.Category);})
+    .attr("opacity", 0.65)
+    .on("mouseover", function(d,i) {
+      tooltip.style("opacity", 1)
+             .style("left", (d3.event.pageX)+"px")
+             .style("top", (d3.event.pageY)+"px")
+             .html(d.Category + "<br />Total fat: " + d.TotalFat + " g<br />Saturated fat: " + d.SaturatedFat
+                   + " g<br />Total calories: " + d.Calories + " kcal");
+    })
+    .on("mouseout", function() {
+      tooltip.style("opacity", 0);
+    })
+    .attr("height", 1)
+    .attr("y", height-1)
+    .transition().duration(2000).delay(500)
+    .attr("height", function(d) { return height - y(d.TotalFat); })
+    .attr("y", function(d) {return y(d.TotalFat); });
+    
+  var x_axis = d3.axisBottom(x)
+  var y_axis = d3.axisLeft(y)
+    .tickValues([5,10,15,20,25,30]);
+  d3.select("svg").append("g")
+    .style("font", "13px times")
+    .attr("transform", "translate(" + leftmargin + "," + (height + upmargin) + ")")
+    .call(x_axis);
+  d3.select("svg").append("g")
+    .style("font", "13px times")
+    .attr("transform", "translate(" + leftmargin + "," + upmargin + ")")
+    .call(y_axis);
+  
+  d3.select("svg")
+    .append("text")
+    .attr("x", leftmargin-25)
+    .attr("y", upmargin-25)
+    .text("Total Fat (g)")
+  d3.select("#annotation1")
+    .style("left", (leftmargin+width*5/6)+"px")
+    .style("top", (upmargin+475)+"px")
+    .html("Desserts, smoothies and shakes <br /> contain higher portion of saturated <br /> fat though total fat is lower.")
+    .style("opacity", 0)
+    .transition().duration(500).delay(2500)
+    .style("opacity", 1);
+  
+  d3.select("#annotation2")
+    .style("left", (leftmargin+width*1/6+175)+"px")
+    .style("top", (upmargin+height/3+325)+"px")
+    .html("Chicken, fish and salads contain <br />lower portion of saturated fat <br /> than beef and pork.")
+    .style("opacity", 0)
+    .transition().duration(500).delay(2500)
+    .style("opacity", 1);
+}
+
+function ShowFat() {
+  var data = [
+    {
+        "Category": "Breakfast",
+        "Calories": "526.7",
+        "TotalFat": "27.7",
+        "SaturatedFat": "10.7",
+    },
+    {
+        "Category": "Beef & Pork",
+        "Calories": "494",
+        "TotalFat": "24.9",
+        "SaturatedFat": "10.5",
+    },
+    {
+        "Category": "Chicken & Fish",
+        "Calories": "553",
+        "TotalFat": "27",
+        "SaturatedFat": "6.2",
+    },
+    {
+        "Category": "Salads",
+        "Calories": "270",
+        "TotalFat": "11.8",
+        "SaturatedFat": "3.8",
+    },
+    {
+        "Category": "Snacks & Sides",
+        "Calories": "245.8",
+        "TotalFat": "10.5",
+        "SaturatedFat": "2.7",
+    },
+    {
+        "Category": "Desserts",
+        "Calories": "222.1",
+        "TotalFat": "7.4",
+        "SaturatedFat": "4.3",
+    },
+    {
+        "Category": "Beverages",
+        "Calories": "113.7",
+        "TotalFat": "0.1",
+        "SaturatedFat": "0.1",
+    },
+    {
+        "Category": "Coffee & Tea",
+        "Calories": "283.9",
+        "TotalFat": "8",
+        "SaturatedFat": "4.9",
+    },
+    {
+        "Category": "Smoothies & Shakes",
+        "Calories": "531.4",
+        "TotalFat": "14.1",
+        "SaturatedFat": "8.4",
+    }
+  ]
+  var width = 900;
+  var height = 500;
+  var leftmargin = 150;
+  var upmargin = 50;
+  var fields = ["Breakfast", "Beef & Pork", "Chicken & Fish", "Salads", "Snacks & Sides", "Desserts", "Beverages", "Coffee & Tea", "Smoothies & Shakes"];
+  var colors = ["Gray", "Crimson", "Orange", "Green", "Violet", "DodgerBlue", "Olive", "Brown", "SlateBlue"];
+  var x = d3.scaleBand().domain(fields).range([0, width]);
+  var y = d3.scaleLinear().domain([0,30]).range([height,0]);
+  var color = d3.scaleOrdinal().domain(fields).range(colors);
+  var tooltip = d3.select("#tooltip");
+
+  d3.select("svg")
+    .append("g")
+      .attr("transform", "translate(" + leftmargin + "," + upmargin + ")")
+    .selectAll()
+    .data(data)
+    .enter()
+    .append("rect")
+    .attr("width", width/9-5)
+    .attr("x", function(d) {return x(d.Category);})
+    .attr("fill", function(d) {return color(d.Category);})
+    .on("mouseover", function(d,i) {
+      tooltip.style("opacity", 1)
+             .style("left", (d3.event.pageX)+"px")
+             .style("top", (d3.event.pageY)+"px")
+             .html(d.Category + "<br />Total fat: " + d.TotalFat + " g<br />Saturated fat: " + d.SaturatedFat
+                   + " g<br />Total calories: " + d.Calories + " kcal");
+    })
+    .on("mouseout", function() {
+      tooltip.style("opacity", 0);
+    })
+    .attr("height", 1)
+    .attr("y", height-1)
+    .transition().duration(2000)
+    .attr("height", function(d) { return height - y(d.SaturatedFat); })
+    .attr("y", function(d) {return y(d.SaturatedFat); });
+  
+    
+}
+
+</script>
+</body>
+</html>

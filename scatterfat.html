@@ -1,0 +1,150 @@
+ <!DOCTYPE html>
+<html>
+<script src="https://d3js.org/d3.v5.min.js"></script>
+
+<head>
+<title>Nutritions in McDonalds Menu</title>
+</head>
+
+<style>
+.container {margin-left:325px}
+
+#tooltip {
+  opacity: 0;
+  position: absolute;
+  text-align: left;
+  font-size: 14px;
+  background: AliceBlue;
+  border: 0px;
+  padding: 10px 20px;
+}
+
+button {
+  background-color: white;
+  border: 2px solid SeaGreen;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  border-radius: 8px;
+  transition-duration: 0.4s;
+  cursor: pointer;
+}
+
+.button1:hover {
+  background-color: SeaGreen;
+  color: white;
+}
+
+p {font-size : 18px;}
+
+</style>
+
+<body onload="init()">
+
+<h1>Relationship of Calories with Total Fat</h1>
+<br>
+<p>Clearly, fat is a major source of calories. On average, 1 gram of fat produces 20 kcal of evergy.</p>
+<p>Mouse over to the data points to view details of the manu item.</p>
+
+<svg width="1100" height="700">
+</svg>
+
+<div id="tooltip"></div>
+<br>
+
+<button class="container button1" align="center">
+Click to jump back<br>
+to the main page</button>
+
+<script>
+async function init() {
+  const data = await d3.csv(
+    "https://wangcp93.github.io/data/McDonaldsMenu.csv");
+  
+  var width = 600;
+  var height = 600;
+  var margin = 50;
+  var fields = ["Breakfast", "Beef & Pork", "Chicken & Fish", "Salads", "Snacks & Sides", "Desserts", "Beverages", "Coffee & Tea", "Smoothies & Shakes"];
+  var colors = ["Gray", "Crimson", "Orange", "Green", "Violet", "DodgerBlue", "Olive", "Brown", "SlateBlue"];
+
+  var x = d3.scaleLinear().domain([0,65]).range([0, width]);
+  var y = d3.scaleLinear().domain([0,1300]).range([height ,0]);
+  var color = d3.scaleOrdinal().domain(fields).range(colors);
+  var legend = d3.scaleBand().domain(fields).range([margin+height/5,margin+height*4/5]);
+  var tooltip = d3.select("#tooltip");
+  
+  
+    d3.select("svg")
+      .append("g")
+        .attr("transform", "translate(" + margin + "," + margin + ")")
+    .selectAll()
+    .data(data)
+    .enter()
+    .append("circle")
+    .attr("cx", function(d) {return x(d.TotalFat); })
+    .attr("cy", function(d) {return y(d.Calories); })
+    .attr("fill", function(d) {return color(d.Category); })
+    .on("mouseover", function(d,i) {
+      tooltip.style("opacity", 1)
+             .style("left", (d3.event.pageX)+"px")
+             .style("top", (d3.event.pageY)+"px")
+             .html( d.Item + "<br />Serving size: " + d.ServingSize + "<br />Total fat: "
+                   + d.TotalFat + " g<br />Calories: " + d.Calories + " kcal");
+    })
+    .on("mouseout", function() {
+      tooltip.style("opacity", 0);
+    })
+    .attr("r", 0)
+    .transition().duration(2000).delay(500)
+    .attr("r", 5);
+    
+  var x_axis = d3.axisBottom(x)
+    .tickValues([10,20,30,40,50,60]);
+  var y_axis = d3.axisLeft(y)
+    .tickValues([200,400,600,800,1000,1200]);
+  d3.select("svg").append("g")
+  .style("font", "13px times")
+    .attr("transform", "translate(" + margin + "," + (margin + height) + ")")
+    .call(x_axis);
+  d3.select("svg").append("g")
+    .style("font", "13px times")
+    .attr("transform", "translate(" + margin + "," + margin + ")")
+    .call(y_axis);
+  
+  d3.select("svg")
+    .selectAll()
+    .data(data)
+    .enter()
+    .append("text")
+    .attr("x", function() { return 2*margin + width + 20; })
+    .attr("y", function(d) { return legend(d.Category); })
+    .text(function(d) { return d.Category; })
+    
+  d3.select("svg")
+    .selectAll()
+    .data(data)
+    .enter()
+    .append("circle")
+    .attr("cx", function() { return 2*margin + width; })
+    .attr("cy", function(d) { return legend(d.Category)-5; })
+    .attr("r", "5")
+    .attr("fill", function(d) { return color(d.Category); });
+
+  d3.select("svg")
+    .append("text")
+    .attr("x", 10)
+    .attr("y", margin-25)
+    .text("Calories (kcal)")
+  
+  d3.select("svg")
+    .append("text")
+    .attr("x", margin+width)
+    .attr("y", margin+height+25)
+    .text("Total Fat (g)")
+}
+
+</script>
+</body>
+</html>
